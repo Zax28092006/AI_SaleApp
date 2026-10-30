@@ -1,6 +1,7 @@
-from AppBanHang.models import Category, Product
-from AppBanHang import app
+import hashlib
 
+from AppBanHang.models import Category, Product, User
+from AppBanHang import app
 
 def load_categories():
     return Category.query.all()
@@ -9,7 +10,6 @@ def load_products(kw = None, cate_id = None,page = 1):
     query = Product.query
     if kw:
         query = query.filter(Product.name.contains(kw))
-    if cate_id:
         query = query.filter(Product.category_id == int(cate_id))
 
     page_size = app.config['PAGE_SIZE']
@@ -19,3 +19,10 @@ def load_products(kw = None, cate_id = None,page = 1):
 
 def count_products():
     return Product.query.count()
+
+def authorize(username, password):
+    password = str(hashlib.md5(password.strip().encode("utf-8")).hexdigest())
+    return User.query.filter(User.username.__eq__(username.strip()), User.password.__eq__(password)).first()
+
+def get_user_by_id(id):
+    return User.query.get(id)

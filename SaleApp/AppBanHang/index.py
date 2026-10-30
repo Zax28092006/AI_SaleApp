@@ -1,9 +1,10 @@
 import math
 
-from flask import render_template,request
-from AppBanHang.dao import load_categories, load_products, count_products
+from flask import render_template,request, redirect
+from AppBanHang.dao import load_categories, load_products, count_products, authorize
+from flask_login import login_user, logout_user
+from AppBanHang import app,db, dao, login
 
-from AppBanHang import app
 
 
 @app.route('/')
@@ -18,6 +19,22 @@ def index():
 def login_view():
     return render_template('login.html')
 
+@app.route('/logout')
+def logout_view():
+    logout_user()
+    return redirect('login.html')
+
+@app.route('/login',methods =['post'])
+def login_process():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    u = dao.authorize(username = username, password = password)
+    if u:
+        login_user(user = u)
+    return redirect('/') if request.args.get('from') else redirect('/admin')
+
+
 @app.route('/register')
 def register_view():
     return render_template('register.html')
@@ -27,6 +44,10 @@ def common_responses():
     return {
         'categories': load_categories()
     }
+
+@login.user_loader
+def load_user(user_id):
+    return dao.get_user_by_id(user_id)
 
 if __name__ == '__main__':
     with app.app_context():
